@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import csv
 import logging
 import os.path
 import sys
@@ -9,7 +10,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def main(input_directory: str, output_directory: str, output_file: str):
+def main(input_directory: str, output_directory: str, output_file: str, col: str, row: str):
     # Validating input directory
     if not os.path.isabs(input_directory):
         input_path = os.path.join(os.getcwd(), input_directory)
@@ -30,7 +31,64 @@ def main(input_directory: str, output_directory: str, output_file: str):
         sys.exit(1)
     output_file = os.path.normpath(os.path.join(output_path, output_file))
 
-    logger.info(f"Transposing files in {input_path} and saving to {output_file}")
+    logger.info(f"Transposing files in `{input_path}` and saving to `{output_file}`")
+
+    all_keys = set()
+    files_data = []
+    for intput_file in next(os.walk(input_path), (None, None, []))[2]:
+        input_file_path = os.path.join(input_path, intput_file)
+        ext = os.path.splitext(input_file_path)[-1].lower()
+
+        # Ignore anything which is not .txt or .csv file
+        if ext not in ['.csv', '.txt']:
+            continue
+
+        logger.info(f"\tTransposing: `{intput_file}`")
+
+        # TODO: Better encoding handling needed here, or potentially consider reading
+        #  as bytes and doing the CSV bit by hand
+        process_file = True
+        with open(input_file_path, 'r', encoding='UTF-16', newline='') as csvfile:
+            rows = []
+            csvreader = csv.DictReader(csvfile, delimiter='\t')
+            for csv_row in csvreader:
+                # Transform data to strip leading/trailing chars
+                transform_data = {key.strip(): value.strip() for key, value in csv_row.items()}
+
+                if col not in transform_data:
+                    logger.warning(f"Unable to process file as column `{col}` is missing")
+                    process_file = False
+                    break
+                if row not in transform_data:
+                    logger.warning(f"Unable to process file as column `{row}` is missing")
+                    process_file = False
+                    break
+                rows.append(transform_data)
+
+        if process_file:
+            file_data = {}
+            for file_row in rows:
+                if file_row[col] in file_data:
+                    logger.warning(f"Unable to process file as column `{file_row[col]}` appears more "
+                                   f"than once")
+                    process_file = False
+                    break
+                file_data[file_row[col]] = file_row[row]
+
+            if process_file:
+                files_data.append(file_data)
+                for key in file_data.keys():
+                    all_keys.add(key)
+
+    # TODO: Might need better encoding handling here - setting to UTF-16 to match input data
+    with open(output_file, 'w', encoding='UTF-16', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=list(all_keys), delimiter='\t')
+        writer.writeheader()
+        for file_data in files_data:
+            data_to_write = {key: file_data.get(key, '') for key in all_keys}
+            writer.writerow(data_to_write)
+
+    logger.info("Finished transposing and written to output file")
 
 
 if __name__ == '__main__':
@@ -41,6 +99,8 @@ if __name__ == '__main__':
     arg_parser.add_argument('input_directory')
     arg_parser.add_argument('output_directory')
     arg_parser.add_argument('--output_file', default='output.csv')
+    arg_parser.add_argument('--col', default='Name')
+    arg_parser.add_argument('--row', default='Value')
 
     args = arg_parser.parse_args()
-    main(args.input_directory, args.output_directory, args.output_file)
+    main(args.input_directory, args.output_directory, args.output_file, args.col, args.row)
