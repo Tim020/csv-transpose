@@ -35,15 +35,15 @@ def main(input_directory: str, output_directory: str, output_file: str, col: str
 
     all_keys = set()
     files_data = []
-    for intput_file in next(os.walk(input_path), (None, None, []))[2]:
-        input_file_path = os.path.join(input_path, intput_file)
+    for input_file in next(os.walk(input_path), (None, None, []))[2]:
+        input_file_path = os.path.join(input_path, input_file)
         ext = os.path.splitext(input_file_path)[-1].lower()
 
         # Ignore anything which is not .txt or .csv file
         if ext not in ['.csv', '.txt']:
             continue
 
-        logger.info(f"\tTransposing: `{intput_file}`")
+        logger.info(f"\tTransposing: `{input_file}`")
 
         # TODO: Better encoding handling needed here, or potentially consider reading
         #  as bytes and doing the CSV bit by hand
