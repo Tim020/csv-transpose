@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def main(input_directory: str, output_directory: str, output_file: str, col: str, row: str):
+def main(input_directory: str, output_directory: str, output_file: str, col: str, row: str,
+         add_file: bool):
     # Validating input directory
     if not os.path.isabs(input_directory):
         input_path = os.path.join(os.getcwd(), input_directory)
@@ -79,6 +80,10 @@ def main(input_directory: str, output_directory: str, output_file: str, col: str
                     break
                 file_data[file_row[col]] = file_row[row]
 
+            # Optionally add the field indicating the file the data came from
+            if add_file:
+                file_data["_file"] = input_file
+
             if process_file:
                 files_data.append(file_data)
                 for key in file_data.keys():
@@ -105,6 +110,10 @@ if __name__ == '__main__':
     arg_parser.add_argument('--output_file', default=None)
     arg_parser.add_argument('--col', default='Name')
     arg_parser.add_argument('--row', default='Value')
+    arg_parser.add_argument('-f', action='store_true', dest="add_file_header",
+                            help="When set, add an extra column to the output "
+                                 "CSV indicating the input file name")
 
     args = arg_parser.parse_args()
-    main(args.input_directory, args.output_directory, args.output_file, args.col, args.row)
+    main(args.input_directory, args.output_directory, args.output_file, args.col, args.row,
+         args.add_file_header)
