@@ -86,7 +86,7 @@ def main(input_directory: str, output_directory: str, output_file: str, col: str
 
     # TODO: Might need better encoding handling here - setting to UTF-16 to match input data
     with open(output_file, 'w', encoding='UTF-16', newline='') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=list(all_keys), delimiter='\t')
+        writer = csv.DictWriter(csvfile, fieldnames=sorted(list(all_keys)), delimiter='\t')
         writer.writeheader()
         for file_data in files_data:
             data_to_write = {key: file_data.get(key, '') for key in all_keys}
