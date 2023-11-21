@@ -29,6 +29,10 @@ def main(input_directory: str, output_directory: str, output_file: str, col: str
     if not os.path.exists(output_path) or not os.path.isdir(output_path):
         logger.error("Output directory does not exist")
         sys.exit(1)
+
+    # If there is not an output file specified, then take the name from the input directory
+    if not output_file:
+        output_file = f"{os.path.split(input_path)[1]}.csv"
     output_file = os.path.normpath(os.path.join(output_path, output_file))
 
     logger.info(f"Transposing files in `{input_path}` and saving to `{output_file}`")
@@ -98,7 +102,7 @@ if __name__ == '__main__':
     )
     arg_parser.add_argument('input_directory')
     arg_parser.add_argument('output_directory')
-    arg_parser.add_argument('--output_file', default='output.csv')
+    arg_parser.add_argument('--output_file', default=None)
     arg_parser.add_argument('--col', default='Name')
     arg_parser.add_argument('--row', default='Value')
 
